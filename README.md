@@ -27,12 +27,13 @@ A comprehensive hardware testing suite designed for live USB environments. This 
   - memtester
   - smartctl
   - s-tui (optional, for temperature monitoring)
+  - curl (for installation)
 
 ## Installation
 
 1. Download the installer:
 ```bash
-curl -L https://github.com/username/live-hw-tester/raw/main/install-hw-test.sh -o install-hw-test.sh
+curl -L https://raw.githubusercontent.com/3frustratedDucks/live-hw-tester/main/install-hw-test.sh -o install-hw-test.sh
 ```
 
 2. Make it executable:
@@ -44,6 +45,12 @@ chmod +x install-hw-test.sh
 ```bash
 ./install-hw-test.sh
 ```
+
+The installer will:
+- Create necessary directories
+- Download the testing script
+- Make it executable
+- Create a desktop shortcut
 
 ## Usage
 
@@ -60,6 +67,14 @@ Default test durations:
 - Keyboard Test: 1 minute
 
 These durations can be customized during test execution.
+
+## Troubleshooting
+
+If you encounter any issues:
+1. Ensure all required packages are installed
+2. Check that the installation completed successfully
+3. Verify the script is executable
+4. Check the terminal output for any error messages
 
 ## License
 

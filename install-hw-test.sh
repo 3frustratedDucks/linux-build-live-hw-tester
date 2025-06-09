@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-SCRIPT_URL="https://github.com/username/live-hw-tester/raw/main/hw-test.sh"  # Replace with actual URL
+SCRIPT_URL="https://raw.githubusercontent.com/3frustratedDucks/linux-build-live-hw-tester/refs/heads/main/hw-test.sh"  # Replace with actual URL
 LOCAL_BIN_DIR="$HOME/.local/bin"
 DESKTOP_DIR="$HOME/Desktop"
 
