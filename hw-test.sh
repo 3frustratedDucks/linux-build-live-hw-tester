@@ -17,6 +17,52 @@ DEFAULT_MEM_TEST_TIME=300  # 5 minutes
 DEFAULT_DISK_TEST_TIME=600 # 10 minutes
 KEYBOARD_TEST_TIME=60      # 1 minute
 
+# Function to check if running as root
+check_root() {
+    if [ "$EUID" -ne 0 ]; then
+        echo -e "${RED}This operation requires root privileges${NC}"
+        echo -e "${YELLOW}Please run this script with sudo${NC}"
+        return 1
+    fi
+    return 0
+}
+
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to check for required commands
+check_requirements() {
+    local missing_commands=()
+    
+    # Check for stress-ng
+    if ! command_exists stress-ng; then
+        missing_commands+=("stress-ng")
+    fi
+    
+    # Check for memtester
+    if ! command_exists memtester; then
+        missing_commands+=("memtester")
+    fi
+    
+    # Check for smartctl
+    if ! command_exists smartctl; then
+        missing_commands+=("smartctl")
+    fi
+    
+    if [ ${#missing_commands[@]} -ne 0 ]; then
+        echo -e "${RED}Missing required commands:${NC}"
+        for cmd in "${missing_commands[@]}"; do
+            echo -e "${YELLOW}- $cmd${NC}"
+        done
+        echo -e "${YELLOW}Please install the missing commands and try again${NC}"
+        return 1
+    fi
+    
+    return 0
+}
+
 # Get system information
 get_system_info() {
     clear
@@ -69,6 +115,14 @@ get_system_info() {
 # CPU Stress Test
 run_cpu_test() {
     local duration=$1
+    
+    # Check for stress-ng
+    if ! command_exists stress-ng; then
+        echo -e "${RED}stress-ng is not installed${NC}"
+        echo -e "${YELLOW}Please install it and try again${NC}"
+        return 1
+    fi
+    
     local cpu_count=$(nproc)
     local workers=$((cpu_count * 2))
     
@@ -81,6 +135,19 @@ run_cpu_test() {
 # Memory Test
 run_memory_test() {
     local duration=$1
+    
+    # Check for memtester
+    if ! command_exists memtester; then
+        echo -e "${RED}memtester is not installed${NC}"
+        echo -e "${YELLOW}Please install it and try again${NC}"
+        return 1
+    fi
+    
+    # Check for root privileges
+    if ! check_root; then
+        return 1
+    fi
+    
     local total_mem=$(free -m | awk '/^Mem:/{print $2}')
     local test_mem=$((total_mem / 2))  # Use half of available memory
     
@@ -93,6 +160,18 @@ run_memory_test() {
 # Disk Test
 run_disk_test() {
     local duration=$1
+    
+    # Check for smartctl
+    if ! command_exists smartctl; then
+        echo -e "${RED}smartctl is not installed${NC}"
+        echo -e "${YELLOW}Please install it and try again${NC}"
+        return 1
+    fi
+    
+    # Check for root privileges
+    if ! check_root; then
+        return 1
+    fi
     
     echo -e "${GREEN}Starting disk stress test for ${duration} seconds${NC}"
     
@@ -154,14 +233,20 @@ show_menu() {
     echo
     echo "1. Show System Information"
     echo "2. Run CPU Stress Test"
-    echo "3. Run Memory Test"
-    echo "4. Run Disk Test"
+    echo "3. Run Memory Test (requires root)"
+    echo "4. Run Disk Test (requires root)"
     echo "5. Run Keyboard Test"
-    echo "6. Run All Tests"
+    echo "6. Run All Tests (requires root)"
     echo "7. Exit"
     echo
     echo -n "Select an option (1-7): "
 }
+
+# Check for required commands at startup
+if ! check_requirements; then
+    echo -e "${RED}Please install the missing commands and try again${NC}"
+    exit 1
+fi
 
 # Main loop
 while true; do
@@ -191,12 +276,17 @@ while true; do
             run_keyboard_test
             ;;
         6)
-            echo -e "${GREEN}Running all tests...${NC}"
-            get_system_info
-            run_cpu_test $DEFAULT_CPU_TEST_TIME
-            run_memory_test $DEFAULT_MEM_TEST_TIME
-            run_disk_test $DEFAULT_DISK_TEST_TIME
-            run_keyboard_test
+            if ! check_root; then
+                echo -e "${RED}Cannot run all tests without root privileges${NC}"
+                echo -e "${YELLOW}Please run this script with sudo${NC}"
+            else
+                echo -e "${GREEN}Running all tests...${NC}"
+                get_system_info
+                run_cpu_test $DEFAULT_CPU_TEST_TIME
+                run_memory_test $DEFAULT_MEM_TEST_TIME
+                run_disk_test $DEFAULT_DISK_TEST_TIME
+                run_keyboard_test
+            fi
             ;;
         7)
             echo -e "${GREEN}Exiting...${NC}"
